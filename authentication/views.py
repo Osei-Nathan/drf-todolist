@@ -1,39 +1,33 @@
-from django.shortcuts import render
 from rest_framework.generics import GenericAPIView
-from authentication import serializers
 from authentication.serializers import RegisterSerializer, LoginSerializer
-from rest_framework import response, status, permissions
+from rest_framework.response import Response
+from rest_framework import status, permissions
 from django.contrib.auth import authenticate
 
-
 class AuthUserAPIView(GenericAPIView):
-
+    serializer_class = RegisterSerializer
     permission_classes = (permissions.IsAuthenticated,)
 
     def get(self, request):
         user = request.user
-        serializer = RegisterSerializer(user)
-        return response.Response({'user': serializer.data})
-
+        serializer = self.get_serializer(user)  # Use get_serializer() method
+        return Response({'user': serializer.data})
 
 class RegisterAPIView(GenericAPIView):
     authentication_classes = []
-
     serializer_class = RegisterSerializer
 
     def post(self, request):
-        serializer = self.serializer_class(data=request.data)
+        serializer = self.get_serializer(data=request.data)
 
         if serializer.is_valid():
             serializer.save()
-            return response.Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-        return response.Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class LoginAPIView(GenericAPIView):
     authentication_classes = []
-
     serializer_class = LoginSerializer
 
     def post(self, request):
@@ -43,9 +37,9 @@ class LoginAPIView(GenericAPIView):
         user = authenticate(username=email, password=password)
 
         if user:
-            serializer = self.serializer_class(user)
+            serializer = self.get_serializer(user)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response({'message': "Invalid credentials, try again"}, status=status.HTTP_401_UNAUTHORIZED)
 
-            return response.Response(serializer.data, status=status.HTTP_200_OK)
-        return response.Response({'message': "Invalid credentials, try again"}, status=status.HTTP_401_UNAUTHORIZED)
 
 # Create your views here.
