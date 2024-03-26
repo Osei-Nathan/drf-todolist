@@ -29,7 +29,7 @@ class TestListCreateTodos(TodosAPITestCase):
     def test_should_not_create_todo_with_no_auth(self):
         response = self.create_todo()
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-
+   
     def test_should_create_todo(self):
         previous_todo_count = Todo.objects.all().count()
         self.authenticate()
