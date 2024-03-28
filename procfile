@@ -1,4 +1,2 @@
 web: gunicorn todolist.wsgi
-release: py manage.py makemigrations --noinput
-release: py manage.py collectstatic --noinput
-release: py manage.py migrate --noinput
+release: python manage.py makemigrations --noinput && python manage.py collectstatic --noinput && python manage.py migrate --noinput
