@@ -3,15 +3,18 @@ from authentication.serializers import RegisterSerializer, LoginSerializer
 from rest_framework.response import Response
 from rest_framework import status, authentication
 from django.contrib.auth import authenticate
+from rest_framework.authentication import SessionAuthentication
+
 
 class AuthUserAPIView(GenericAPIView):
-    authentication_classes = [authentication.SessionAuthentication]  # Use appropriate authentication class
+    authentication_classes = [SessionAuthentication]  # Use appropriate authentication class
     serializer_class = RegisterSerializer
 
     def get(self, request):
         user = request.user
         serializer = self.get_serializer(user)
         return Response({'user': serializer.data})
+
 
 class RegisterAPIView(GenericAPIView):
     authentication_classes = []
