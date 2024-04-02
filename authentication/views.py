@@ -1,16 +1,16 @@
 from rest_framework.generics import GenericAPIView
 from authentication.serializers import RegisterSerializer, LoginSerializer
 from rest_framework.response import Response
-from rest_framework import status, permissions
+from rest_framework import status, authentication
 from django.contrib.auth import authenticate
 
 class AuthUserAPIView(GenericAPIView):
+    authentication_classes = [authentication.SessionAuthentication]  # Use appropriate authentication class
     serializer_class = RegisterSerializer
-    permission_classes = (permissions.IsAuthenticated,)
 
     def get(self, request):
         user = request.user
-        serializer = self.get_serializer(user)  # Use get_serializer() method
+        serializer = self.get_serializer(user)
         return Response({'user': serializer.data})
 
 class RegisterAPIView(GenericAPIView):
@@ -39,7 +39,9 @@ class LoginAPIView(GenericAPIView):
         if user:
             serializer = self.get_serializer(user)
             return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response({'message': "Invalid credentials, try again"}, status=status.HTTP_401_UNAUTHORIZED)
+        else:
+            return Response({'message': "Invalid credentials, try again"}, status=status.HTTP_401_UNAUTHORIZED)
+
 
 
 # Create your views here.
