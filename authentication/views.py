@@ -33,7 +33,7 @@ class LoginAPIView(GenericAPIView):
     authentication_classes = []
     serializer_class = LoginSerializer
 
-    def get(self, request):
+    def post(self, request):
         email = request.data.get('email', None)
         password = request.data.get('password', None)
 
