@@ -2,7 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.http import JsonResponse
 from rest_framework import status
-from authentication.serializers import RegisterSerializer, LoginSerializer, AuthUserAPIView
+from authentication.serializers import RegisterSerializer, LoginSerializer
 from django.contrib.auth import authenticate
 from rest_framework.authentication import SessionAuthentication
 from rest_framework_simplejwt.tokens import RefreshToken
