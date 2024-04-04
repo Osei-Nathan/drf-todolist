@@ -1,48 +1,25 @@
-import jwt
-from rest_framework.authentication import get_authorization_header, BaseAuthentication
-from authentication.models import User
+from rest_framework_simplejwt.authentication import JWTAuthentication as BaseJWTAuthentication
+from rest_framework.exceptions import AuthenticationFailed
 
-from rest_framework import exceptions
-import jwt
-
-from django.conf import settings
-
-
-class JWTAuthentication(BaseAuthentication):
+class JWTAuthentication(BaseJWTAuthentication):
 
     def authenticate(self, request):
-
-        auth_header = get_authorization_header(request)
-
-        auth_data = auth_header.decode('utf-8')
-
-        auth_token = auth_data.split(" ")
-
-        if len(auth_token) != 2:
-            raise exceptions.AuthenticationFailed('Token not valid')
-
-        token = auth_token[1]
-
+        """
+        Authenticate the request and return a two-tuple of (user, token).
+        """
         try:
-            payload = jwt.decode(
-                token, settings.SECRET_KEY, algorithms="HS256")
+            # Get the raw token from the request
+            raw_token = self.get_raw_token(request)
 
-            username = payload['username']
+            # Validate the token and retrieve its payload
+            validated_token = self.get_validated_token(raw_token)
 
-            user = User.objects.get(username=username
-                                    )
-            return (user, token)
+            # Get the user associated with the token
+            user = self.get_user(validated_token)
 
-        except jwt.ExpiredSignatureError as ex:
-            raise exceptions.AuthenticationFailed(
-                'Token is expired, login again')
+        except AuthenticationFailed as exc:
+            if self.raise_on_error:
+                raise
+            return None
 
-        except jwt.DecodeError as ex:
-            raise exceptions.AuthenticationFailed(
-                'Token is invalid,')
-
-        except User.DoesNotExist as no_user:
-            raise exceptions.AuthenticationFailed(
-                'No such user')
-
-        return super().authenticate(request)
+        return user, validated_token

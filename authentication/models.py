@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 from django.conf import settings
 from .exceptions import UserCreationError, SuperuserCreationError
 from django.contrib.auth.validators import UnicodeUsernameValidator
-from .models import TrackingModel
+from helpers.models import TrackingModel
 
 
 
