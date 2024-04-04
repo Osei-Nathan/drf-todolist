@@ -1,6 +1,4 @@
 from django.db import models
-from helpers.models import TrackingModel
-from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.contrib.auth.models import (
     PermissionsMixin, UserManager, AbstractBaseUser)
 from django.utils.translation import gettext_lazy as _
@@ -8,8 +6,11 @@ from django.utils import timezone
 import jwt
 from datetime import datetime, timedelta
 
-
 from django.conf import settings
+from .exceptions import UserCreationError, SuperuserCreationError
+from django.contrib.auth.validators import UnicodeUsernameValidator
+from .models import TrackingModel
+
 
 
 class MyUserManager(UserManager):
@@ -34,7 +35,10 @@ class MyUserManager(UserManager):
     def create_user(self, username, email, password=None, **extra_fields):
         extra_fields.setdefault('is_staff', False)
         extra_fields.setdefault('is_superuser', False)
-        return self._create_user(username, email, password, **extra_fields)
+        try:
+            return self._create_user(username, email, password, **extra_fields)
+        except Exception as e:
+            raise UserCreationError(str(e))
 
     def create_superuser(self, username, email, password=None, **extra_fields):
         extra_fields.setdefault('is_staff', True)
@@ -45,7 +49,10 @@ class MyUserManager(UserManager):
         if extra_fields.get('is_superuser') is not True:
             raise ValueError('Superuser must have is_superuser=True.')
 
-        return self._create_user(username, email, password, **extra_fields)
+        try:
+            return self._create_user(username, email, password, **extra_fields)
+        except Exception as e:
+            raise SuperuserCreationError(str(e))
 
 
 class User(AbstractBaseUser, PermissionsMixin, TrackingModel):
