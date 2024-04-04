@@ -46,7 +46,7 @@ class LoginAPIView(APIView):
             }
             # Return JSON response with token and user data
             return JsonResponse(
-                {"status": "success", "data": {"token": token, "user": user.username}},
+                {"status": "success", "data": {"tokens": token, "user": user.username}},
                 status=status.HTTP_200_OK,
                 safe=False,
             )
