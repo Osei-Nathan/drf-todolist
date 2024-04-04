@@ -37,13 +37,23 @@ class LoginAPIView(APIView):
 
         user = authenticate(username=email, password=password)
 
-        refresh = RefreshToken.for_user(user)
-        token = {
+        if user:
+            # Generate tokens
+            refresh = RefreshToken.for_user(user)
+            token = {
                 "refresh": str(refresh),
                 "access": str(refresh.access_token),
             }
-        return JsonResponse(
-                {"status": "success", "data": {"token": token, "user": data}},
+
+            # Include user data in the response
+            serializer = RegisterSerializer(user)
+            user_data = serializer.data
+
+            return JsonResponse(
+                {"status": "success", "data": {"token": token, "user": user_data}},
                 status=status.HTTP_200_OK,
                 safe=False,
             )
+        else:
+            return Response({'message': "Invalid credentials, try again"}, status=status.HTTP_401_UNAUTHORIZED)
+
