@@ -6,6 +6,8 @@ from authentication.serializers import RegisterSerializer, LoginSerializer
 from django.contrib.auth import authenticate
 from rest_framework.authentication import SessionAuthentication
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework import serializers
+
 
 class AuthUserAPIView(APIView):
     authentication_classes = [SessionAuthentication]
@@ -45,15 +47,17 @@ class LoginAPIView(APIView):
                 "access": str(refresh.access_token),
             }
 
-            # Include user data in the response
-            serializer = RegisterSerializer(user)
-            user_data = serializer.data
+            # Include user data and token in the response
+            serializer = LoginSerializer(user)  # Use LoginSerializer instead of RegisterSerializer
+            data = serializer.data
+            data['token'] = token  # Include the token data
 
             return JsonResponse(
-                {"status": "success", "data": {"token": token, "user": user_data}},
+                {"status": "success", "data": data},
                 status=status.HTTP_200_OK,
                 safe=False,
             )
         else:
             return Response({'message': "Invalid credentials, try again"}, status=status.HTTP_401_UNAUTHORIZED)
+
 
