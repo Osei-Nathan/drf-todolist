@@ -44,6 +44,8 @@ class LoginAPIView(APIView):
             # Generate tokens
             refresh = RefreshToken.for_user(user)
             access_token = JWTAuthentication().get_validated_token(refresh)
+            
+            # Return response with both tokens and user data
             return Response({
                 "access_token": str(access_token),
                 "refresh_token": str(refresh),
