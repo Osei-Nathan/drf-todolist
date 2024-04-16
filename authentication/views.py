@@ -1,17 +1,14 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from django.http import JsonResponse
-from rest_framework import status
+from rest_framework import status, permissions
 from authentication.serializers import RegisterSerializer, LoginSerializer
 from django.contrib.auth import authenticate
-from rest_framework.authentication import SessionAuthentication
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework import serializers
-from rest_framework_simplejwt.authentication import JWTAuthentication
 
 
 class AuthUserAPIView(APIView):
-    authentication_classes = [SessionAuthentication]
+    permission_classes = (permissions.IsAuthenticated)
+    serializer_class = LoginSerializer
 
     def get(self, request):
         user = request.user
@@ -20,7 +17,7 @@ class AuthUserAPIView(APIView):
 
 
 class RegisterAPIView(APIView):
-    authentication_classes = []
+    serializer_class = RegisterSerializer
 
     def post(self, request):
         serializer = RegisterSerializer(data=request.data)
@@ -31,7 +28,6 @@ class RegisterAPIView(APIView):
 
 
 class LoginAPIView(APIView):
-    authentication_classes = []
     serializer_class = LoginSerializer
 
     def post(self, request):
@@ -39,17 +35,15 @@ class LoginAPIView(APIView):
         password = request.data.get('password', None)
 
         user = authenticate(username=email, password=password)
+        serializer = self.serializer_class(user)
+        response_data = serializer.data
 
-        if user:
-            # Generate tokens
-            refresh = RefreshToken.for_user(user)
-            access_token = JWTAuthentication().get_validated_token(refresh)
-            
-            # Return response with both tokens and user data
-            return Response({
-                "access_token": str(access_token),
-                "refresh_token": str(refresh),
-                "user": LoginSerializer(user).data
-            }, status=status.HTTP_200_OK)
-        else:
-            return Response({'message': "Invalid credentials, try again"}, status=status.HTTP_401_UNAUTHORIZED)
+        refresh = RefreshToken.for_user(user)
+        token = {
+                "refresh": str(refresh),
+                "access": str(refresh.access_token),
+            }
+        
+        response_data['token'] = token
+
+        return Response(response_data,status=status.HTTP_200_OK)

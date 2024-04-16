@@ -7,24 +7,18 @@ import jwt
 from datetime import datetime, timedelta
 
 from django.conf import settings
-from .exceptions import UserCreationError, SuperuserCreationError
+from .exceptions import (UserCreationError, SuperuserCreationError,
+                         UsernameMissingError, EmailMissingError,
+                         StaffMissingError, SuperuserMissingError,
+                         InvalidSuperuserError, TokenGenerationError)
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from helpers.models import TrackingModel
 
-
-
 class MyUserManager(UserManager):
-
     def _create_user(self, username, email, password, **extra_fields):
         """
         Create and save a user with the given username, email, and password.
         """
-        if not username:
-            raise ValueError('The given username must be set')
-
-        if not email:
-            raise ValueError('The given email must be set')
-
         email = self.normalize_email(email)
         username = self.model.normalize_username(username)
         user = self.model(username=username, email=email, **extra_fields)
@@ -33,27 +27,30 @@ class MyUserManager(UserManager):
         return user
 
     def create_user(self, username, email, password=None, **extra_fields):
+        if not username:
+            raise UsernameMissingError('The given username must be set')
+        if not email:
+            raise EmailMissingError('The given email must be set')
+        
         extra_fields.setdefault('is_staff', False)
         extra_fields.setdefault('is_superuser', False)
-        try:
-            return self._create_user(username, email, password, **extra_fields)
-        except Exception as e:
-            raise UserCreationError(str(e))
+        return self._create_user(username, email, password, **extra_fields)
 
     def create_superuser(self, username, email, password=None, **extra_fields):
+        if not username:
+            raise UsernameMissingError('The given username must be set')
+        if not email:
+            raise EmailMissingError('The given email must be set')
+        
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
 
         if extra_fields.get('is_staff') is not True:
-            raise ValueError('Superuser must have is_staff=True.')
+            raise StaffMissingError('Superuser must have is_staff=True.')
         if extra_fields.get('is_superuser') is not True:
-            raise ValueError('Superuser must have is_superuser=True.')
+            raise SuperuserMissingError('Superuser must have is_superuser=True.')
 
-        try:
-            return self._create_user(username, email, password, **extra_fields)
-        except Exception as e:
-            raise SuperuserCreationError(str(e))
-
+        return self._create_user(username, email, password, **extra_fields)
 
 class User(AbstractBaseUser, PermissionsMixin, TrackingModel):
     """
@@ -107,9 +104,12 @@ class User(AbstractBaseUser, PermissionsMixin, TrackingModel):
 
     @property
     def token(self):
-        token = jwt.encode(
-            {'username': self.username, 'email': self.email,
-                'exp': datetime.utcnow() + timedelta(hours=24)},
-            settings.SECRET_KEY, algorithm='HS256')
+        try:
+            token = jwt.encode(
+                {'username': self.username, 'email': self.email,
+                    'exp': datetime.utcnow() + timedelta(hours=24)},
+                settings.SECRET_KEY, algorithm='HS256')
+        except Exception as e:
+            raise TokenGenerationError(str(e))
 
         return token

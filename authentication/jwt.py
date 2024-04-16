@@ -1,3 +1,4 @@
+'''
 from rest_framework_simplejwt.authentication import JWTAuthentication as BaseJWTAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 
@@ -23,3 +24,6 @@ class JWTAuthentication(BaseJWTAuthentication):
             return None
 
         return user, validated_token
+
+
+'''
